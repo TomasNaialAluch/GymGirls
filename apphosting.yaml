@@ -1,0 +1,25 @@
+# Firebase App Hosting config for this Next.js app.
+# Non-secret env vars go here; secrets (service account key, etc.) should be
+# set with `firebase apphosting:secrets:set` and referenced below.
+runConfig:
+  minInstances: 0
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: ""
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: ""
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: ""
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: ""
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: ""
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: ""
+  - variable: FIREBASE_PROJECT_ID
+    value: ""
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: FIREBASE_PRIVATE_KEY

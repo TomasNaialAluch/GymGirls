@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isSignedIn() && currentUser().data.role == 'admin';
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid} — profile + role. Admin manages all; a usuaria reads her own.
+    match /users/{uid} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow write: if isAdmin();
+    }
+
+    // invites/{code} — only the admin app (server, via Admin SDK) touches these directly.
+    // Reads are exposed through an API route, not client-side Firestore access.
+    match /invites/{code} {
+      allow read, write: if false;
+    }
+
+    // routines/{uid} — admin edits, usuaria reads her own.
+    match /routines/{uid} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow write: if isAdmin();
+    }
+
+    // progress/{uid}/entries/{entryId} — usuaria logs/reads her own, admin reads all.
+    match /progress/{uid}/entries/{entryId} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow create: if isSelf(uid);
+      allow update, delete: if isAdmin();
+    }
+  }
+}
