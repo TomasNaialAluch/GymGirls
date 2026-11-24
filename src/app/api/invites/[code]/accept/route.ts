@@ -41,7 +41,6 @@ export async function POST(request: NextRequest, { params }: AcceptInviteParams)
       displayName: invite.displayName,
       email: decoded.email ?? null,
       createdAt: FieldValue.serverTimestamp(),
-      trainingDays: invite.trainingDays,
     };
 
     tx.set(userRef, user);

@@ -24,7 +24,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 
   const snap = await adminDb.collection("routines").doc(uid).get();
-  return NextResponse.json(snap.exists ? snap.data() : { uid, days: {} });
+  return NextResponse.json(snap.exists ? snap.data() : { uid, days: [] });
 }
 
 /** Admin-only: full replace of a usuaria's routine (all days/exercises). */

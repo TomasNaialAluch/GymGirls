@@ -1,4 +1,8 @@
-export default function Home() {
-  // TODO: landing/redirect — send signed-in usuarias to /dia, admin to /admin, else /login.
-  return <div>GymGirls</div>;
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+
+export default async function Home() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  redirect(user.role === "admin" ? "/admin" : "/dia");
 }

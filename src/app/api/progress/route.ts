@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { getCurrentUser } from "@/lib/auth/session";
-import type { LoggedSet, WeekDay } from "@/types";
+import type { LoggedSet } from "@/types";
 
 /** Usuaria logs a completed exercise (reps/weight per set) for herself. */
 export async function POST(request: NextRequest) {
@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body: {
-    day: WeekDay;
+    dayId: string;
+    dayName: string;
+    blockId: string;
+    blockName: string;
     exerciseId: string;
     exerciseName: string;
     sets: LoggedSet[];
@@ -27,7 +30,10 @@ export async function POST(request: NextRequest) {
   await entryRef.set({
     id: entryRef.id,
     uid: currentUser.uid,
-    day: body.day,
+    dayId: body.dayId,
+    dayName: body.dayName,
+    blockId: body.blockId,
+    blockName: body.blockName,
     exerciseId: body.exerciseId,
     exerciseName: body.exerciseName,
     sets: body.sets,

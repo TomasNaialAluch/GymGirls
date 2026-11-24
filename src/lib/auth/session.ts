@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import type { AppUser } from "@/types";
 
-export const SESSION_COOKIE_NAME = "gymgirls_session";
+export { SESSION_COOKIE_NAME };
 
 /** Reads the session cookie, verifies it against Firebase, and loads the app user doc. */
 export async function getCurrentUser(): Promise<AppUser | null> {

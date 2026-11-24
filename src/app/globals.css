@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
+/*
+  GymGirls — tokens globales de marca.
+  Fuente de verdad del diseño: ver BRAND.md (paleta §2/§7.3, tipografía §3, glow §4, cards §8.1).
+  La app es dark-first: no hay tema claro, el fondo siempre es negro.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0208;
+  --surface: #160010;
+  --surface-alt: #1c1a22;
+  --foreground: #ffffff;
+  --muted: #9a96a3;
+
+  --primary: #ff2e92;
+  --primary-dark: #c2185b;
+  --glow: #ff8fd6;
+  --pastel: #ffd3ec;
+
+  --gradient-data: linear-gradient(135deg, #ff2e92 0%, #8e2de2 100%);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-glow: var(--glow);
+  --color-pastel: var(--pastel);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+  --font-display: var(--font-fredoka);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-card: 1.5rem;
+  --radius-pill: 999px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Wordmark / hero moments con tratamiento neón — BRAND.md §3-4. No usar en texto largo. */
+.gg-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #ffe6f6;
+  text-shadow:
+    0 0 6px var(--glow),
+    0 0 18px var(--primary),
+    0 0 40px var(--primary-dark);
+}
+
+/* Card oscura elevada con glass/blur — BRAND.md §8.1 */
+.gg-card {
+  background: color-mix(in srgb, var(--surface-alt) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--glow) 15%, transparent);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* CTA pill sólido en magenta — BRAND.md §7.2 */
+.gg-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: var(--foreground);
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Degradé magenta -> violeta para progress rings / data viz — BRAND.md §7.3 */
+.gg-gradient-data {
+  background: var(--gradient-data);
+}
+
+/* Texto secundario (metadatos, labels) — BRAND.md §7.3 */
+.gg-muted {
+  color: var(--muted);
+}
+
+/* Fondo animado de hoces — ver src/components/brand/AnimatedBackground.tsx y BRAND.md §8.
+   Las curvas de giro por nivel (@keyframes gg-blade-spin-N) se generan en runtime
+   en ese componente, no acá, porque dependen de un cálculo en JS. */
+@keyframes gg-ring-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-animated-bg * {
+    animation: none !important;
+  }
 }
