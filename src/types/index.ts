@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+import type { DoneEntry } from "@/lib/completion";
 
 export type UserRole = "admin" | "usuaria";
 
@@ -18,12 +19,30 @@ export interface AppUser {
   role: UserRole;
   displayName: string;
   email: string | null;
+  /** Alumnos: uid de su entrenador (null o ausente si no está vinculado). Admins: null. */
+  adminId?: string | null;
+  /** Alumno creado por el entrenador que todavía no tiene cuenta. */
+  pending?: boolean;
+  /** Link vigente de un alumno pendiente. */
+  inviteCode?: string;
   createdAt: Timestamp;
+}
+
+/** Alumno con los datos que muestra el panel del entrenador. */
+export interface AlumnoSummary extends AppUser {
+  hasRoutine: boolean;
+  /** Milisegundos del último ejercicio registrado (null si nunca entrenó). */
+  lastTrainedAt: number | null;
+  days: RoutineDay[];
+  /** Registros recientes, para calcular en el cliente qué completó. */
+  recent: DoneEntry[];
 }
 
 /** Firestore: invites/{code} */
 export interface Invite {
   code: string;
+  /** Perfil de alumno al que da acceso (las invitaciones viejas no tienen). */
+  studentId?: string;
   displayName: string;
   createdBy: string;
   createdAt: Timestamp;

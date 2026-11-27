@@ -2,24 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { getCurrentUser } from "@/lib/auth/session";
+import { canReadTrainingData, getManagedAlumno } from "@/lib/server/access";
 import type { Routine } from "@/types";
 
 interface RouteParams {
   params: Promise<{ uid: string }>;
 }
 
-function canAccess(
-  currentUser: { uid: string; role: string } | null,
-  targetUid: string
-) {
-  if (!currentUser) return false;
-  return currentUser.role === "admin" || currentUser.uid === targetUid;
-}
-
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { uid } = await params;
   const currentUser = await getCurrentUser();
-  if (!canAccess(currentUser, uid)) {
+  if (!currentUser || !(await canReadTrainingData(currentUser, uid))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -27,15 +20,18 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(snap.exists ? snap.data() : { uid, days: [] });
 }
 
-/** Admin-only: full replace of a usuaria's routine (all days/exercises). */
+/** Solo el entrenador del alumno: reemplaza toda su rutina (días y ejercicios). */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { uid } = await params;
   const currentUser = await getCurrentUser();
-  if (!currentUser || currentUser.role !== "admin") {
+  if (!(await getManagedAlumno(currentUser, uid))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const body: Pick<Routine, "days"> = await request.json();
+  if (!Array.isArray(body.days)) {
+    return NextResponse.json({ error: "Rutina inválida" }, { status: 400 });
+  }
 
   await adminDb
     .collection("routines")

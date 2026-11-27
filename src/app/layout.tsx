@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { Fredoka, Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Fredoka, Geist, Geist_Mono } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import { AuthProvider } from "@/lib/auth/useAuth";
+import { NoticeProvider } from "@/components/ui/Notice";
+import SignalLayer from "@/components/ui/SignalLayer";
+import PageTransition from "@/components/ui/PageTransition";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,6 +24,13 @@ const fredoka = Fredoka({
   subsets: ["latin"],
 });
 
+// Titulares condensados del estilo Póster (eje de ancho variable).
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  axes: ["wdth"],
+});
+
 export const metadata: Metadata = {
   title: "GymGirls",
   description: "Rutinas y seguimiento de entrenamiento",
@@ -29,12 +39,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} h-full antialiased`}
+      lang="es"
+      className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} ${archivo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          <NoticeProvider>
+            <AppShell>
+              <PageTransition>{children}</PageTransition>
+            </AppShell>
+            <SignalLayer />
+          </NoticeProvider>
         </AuthProvider>
       </body>
     </html>

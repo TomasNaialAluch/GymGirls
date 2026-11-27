@@ -6,7 +6,7 @@ const SESSION_EXPIRES_IN_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 /** Exchanges a Firebase ID token (from client sign-in) for an HttpOnly session cookie. */
 export async function POST(request: NextRequest) {
-  const { idToken } = await request.json();
+  const { idToken, remember } = await request.json();
   if (!idToken) {
     return NextResponse.json({ error: "Falta idToken" }, { status: 400 });
   }
@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
     secure: true,
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_EXPIRES_IN_MS / 1000,
+    // Sin "recordar", la cookie dura hasta que se cierra el navegador.
+    ...(remember !== false && { maxAge: SESSION_EXPIRES_IN_MS / 1000 }),
   });
   return response;
 }

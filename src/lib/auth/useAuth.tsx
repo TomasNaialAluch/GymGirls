@@ -8,7 +8,10 @@ import {
   type ReactNode,
 } from "react";
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   onAuthStateChanged,
+  setPersistence,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
@@ -22,7 +25,8 @@ interface AuthContextValue {
   /** Perfil de la app (rol, días de entrenamiento, etc.), traído de /api/me. */
   appUser: AppUser | null | undefined;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  /** `remember`: mantener la sesión en este dispositivo después de cerrarlo. */
+  signIn: (email: string, password: string, remember?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
   /**
    * Vuelve a pedir /api/me. Usar justo después de crear la cookie de sesión
@@ -61,13 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  async function signIn(email: string, password: string) {
+  async function signIn(email: string, password: string, remember = true) {
+    await setPersistence(
+      auth,
+      remember ? browserLocalPersistence : browserSessionPersistence,
+    );
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const idToken = await credential.user.getIdToken();
     await fetch("/api/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, remember }),
     });
     await refreshAppUser();
   }

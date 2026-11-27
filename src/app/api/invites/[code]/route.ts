@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { isInviteCode, isInviteExpired } from "@/lib/invites";
 import type { Invite } from "@/types";
 
 interface RouteParams {
@@ -10,8 +11,10 @@ interface RouteParams {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { code } = await params;
 
-  const snap = await adminDb.collection("invites").doc(code).get();
-  if (!snap.exists) {
+  const snap = isInviteCode(code)
+    ? await adminDb.collection("invites").doc(code).get()
+    : null;
+  if (!snap?.exists) {
     return NextResponse.json({ error: "Invitación inválida" }, { status: 404 });
   }
 
@@ -19,6 +22,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
   if (invite.usedBy) {
     return NextResponse.json(
       { error: "Invitación ya utilizada" },
+      { status: 400 }
+    );
+  }
+
+  if (isInviteExpired(invite.expiresAt)) {
+    return NextResponse.json(
+      { error: "La invitación venció. Pedí una nueva." },
       { status: 400 }
     );
   }

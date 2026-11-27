@@ -224,6 +224,22 @@ Esto **no es una imagen fija**: tiene que construirse con **vectores (SVG/Canvas
 
 ---
 
+## Estilo Póster (vigente desde 2026-11-27)
+
+Dirección elegida para la app; donde contradiga lo anterior, manda esta sección.
+Maqueta: `docs/propuesta-poster.html`.
+
+- **Misma paleta.** Bloques planos de color, esquinas rectas y bordes marcados.
+- **Titulares y botones:** Archivo condensada, peso 900, en mayúsculas.
+- **Portada del alumno:** key visual a pantalla completa con titular gigante.
+- **Entrenamiento:** un ejercicio por pantalla. Actividad sobre lima limón y
+  descanso sobre rosa flúor, cada uno con diseño propio. El fondo animado vuelve en la celebración final.
+- **Neón:** solo en login, registro e invitación.
+- **Excepción de color:** lima limón `#E5FF00` y rosa flúor `#FF0A8A`, y celeste
+  flúor `#00F0FF` (agua), solo para las validaciones visuales (ver `VALIDACIONES.md`).
+
+---
+
 ## 9. Assets
 
 - `public/brand/gymgirls-keyvisual.webp` — key visual original de marca (logo + modelo + patrón de anillos).

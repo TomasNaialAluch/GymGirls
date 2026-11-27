@@ -17,6 +17,11 @@
   --glow: #ff8fd6;
   --pastel: #ffd3ec;
 
+  /* Validaciones visuales — ver VALIDACIONES.md. */
+  --signal-go: #e5ff00;
+  --signal-stop: #ff0a8a;
+  --signal-water: #00f0ff;
+
   --gradient-data: linear-gradient(135deg, #ff2e92 0%, #8e2de2 100%);
 }
 
@@ -27,6 +32,8 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
 
+  --color-go: var(--signal-go);
+  --color-stop: var(--signal-stop);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-glow: var(--glow);
@@ -36,8 +43,14 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-fredoka);
 
-  --radius-card: 1.5rem;
-  --radius-pill: 999px;
+  --font-poster: var(--font-archivo);
+
+  /* Estilo Póster: bloques rectos, sin esquinas redondeadas. */
+  --radius-card: 0px;
+  --radius-pill: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
 }
 
 body {
@@ -57,13 +70,35 @@ body {
     0 0 40px var(--primary-dark);
 }
 
-/* Card oscura elevada con glass/blur — BRAND.md §8.1 */
+/* Card: bloque plano con borde marcado. */
 .gg-card {
-  background: color-mix(in srgb, var(--surface-alt) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--glow) 15%, transparent);
-  border-radius: var(--radius-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 2px solid color-mix(in srgb, var(--pastel) 22%, transparent);
+}
+
+/* Titulares y botones del estilo Póster: Archivo condensada y pesada. */
+.gg-poster {
+  font-family: var(--font-archivo), Impact, sans-serif;
+  font-weight: 900;
+  font-stretch: 62%;
+  text-transform: uppercase;
+  /* Con menos interlineado, las tildes chocan con el renglón de arriba. */
+  line-height: 0.96;
+}
+
+h1:not([class*="gg-"]) {
+  font-family: var(--font-archivo), Impact, sans-serif;
+  font-weight: 900;
+  font-stretch: 62%;
+  text-transform: uppercase;
+  font-size: 3rem;
+  line-height: 0.9;
+}
+
+.gg-button-text {
+  font-family: var(--font-archivo), sans-serif;
+  font-weight: 900;
+  font-stretch: 75%;
 }
 
 /* CTA pill sólido en magenta — BRAND.md §7.2 */
@@ -101,6 +136,256 @@ body {
   to {
     transform: scale(6);
     opacity: 0;
+  }
+}
+
+/* ---------- Destellos de validación ---------- */
+.gg-signal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+}
+.gg-tone-go { --tone: var(--signal-go); }
+.gg-tone-stop { --tone: var(--signal-stop); }
+.gg-tone-brand { --tone: var(--primary); }
+.gg-tone-water { --tone: var(--signal-water); }
+.gg-tone-both { --tone: var(--signal-stop); }
+
+.gg-signal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  animation-name: gg-pulse;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+.gg-signal-full {
+  align-items: center;
+  justify-content: center;
+  background: var(--tone);
+  color: var(--background);
+}
+.gg-signal-full .gg-signal-title {
+  padding: 0 1rem;
+  text-align: center;
+  font-size: clamp(3.5rem, 22vw, 7rem);
+}
+.gg-signal-frame {
+  align-items: flex-start;
+  justify-content: center;
+  box-shadow: inset 0 0 0 10px var(--tone), inset 0 0 0 15px var(--background),
+    inset 0 0 44px 15px var(--tone);
+}
+.gg-signal-frame .gg-signal-title {
+  margin-top: 10px;
+  background: var(--tone);
+  color: var(--background);
+  border: 4px solid var(--background);
+  padding: 0.35rem 1.25rem;
+  font-size: 2rem;
+}
+.gg-tone-brand.gg-signal-frame { box-shadow: inset 0 0 0 4px var(--tone); }
+
+/* ---------- Fases del entrenamiento: se reconocen de lejos ---------- */
+/* Actividad: lima limón con franjas diagonales que avanzan. */
+.gg-stripes {
+  background-image: repeating-linear-gradient(-45deg,
+    var(--background) 0 14px, var(--signal-go) 14px 28px);
+  animation: gg-march 1s linear infinite;
+}
+@keyframes gg-march { to { background-position: 39.6px 0; } }
+/* Descanso: rosa flúor con un círculo que respira. */
+.gg-breathe { animation: gg-breathe 4s ease-in-out infinite; }
+@keyframes gg-breathe {
+  0%, 100% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gg-stripes, .gg-breathe { animation: none; }
+}
+
+/* La pantalla del cronómetro cambia de color ella misma (no solo el destello). */
+.gg-rest { background: var(--signal-stop); color: var(--background); --rest-bg: var(--signal-stop); }
+.gg-rest[data-beat="dark"] { background: var(--background); color: var(--signal-stop); --rest-bg: var(--background); }
+.gg-rest[data-beat="ready"] { background: var(--signal-go); color: var(--background); --rest-bg: var(--signal-go); }
+.gg-rest[data-beat="ready-dark"] { background: var(--background); color: var(--signal-go); --rest-bg: var(--background); }
+
+.gg-watch { border: 4px solid var(--background); color: var(--background); }
+.gg-watch[data-state="running"] { background: var(--background); color: var(--signal-go); }
+.gg-watch[data-state="paused"] { background: var(--signal-stop); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Al iniciar o pausar: cambian el bloque, los números y el fondo. */
+  .gg-watch-flash { animation: gg-watch-flash 450ms steps(1, end) 3; }
+  .gg-activity:has(.gg-watch-flash) { animation: gg-bg-flash 450ms steps(1, end) 3; }
+  /* Cada 10 segundos los números avisan. */
+  .gg-digits-beat { animation: gg-digits-beat 900ms steps(1, end) 1; }
+}
+@keyframes gg-watch-flash {
+  0% { background: var(--signal-stop); color: var(--background); }
+  50% { background: var(--background); color: var(--signal-go); }
+}
+@keyframes gg-bg-flash {
+  0% { background: var(--signal-stop); }
+  50% { background: var(--signal-go); }
+}
+@keyframes gg-digits-beat {
+  0% { color: var(--signal-stop); }
+  50% { color: var(--foreground); }
+}
+
+/* ---------- Transiciones entre pantallas ---------- */
+/* Se ven siempre, también con "reducir movimiento": son parte del diseño
+   pedido. Los parpadeos sí respetan esa preferencia. */
+.gg-page { --enter: 48px; position: relative; }
+.gg-page[data-direction="back"] { --enter: -48px; }
+.gg-wipe { display: none; }
+
+/* Las piezas de cada pantalla se arman una atrás de otra. Se anima
+   `translate` para no pisar los `transform` propios de cada elemento. */
+.gg-page > * > * { animation: gg-enter 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.gg-page > * > :nth-child(2) { animation-delay: 50ms; }
+.gg-page > * > :nth-child(3) { animation-delay: 100ms; }
+.gg-page > * > :nth-child(4) { animation-delay: 150ms; }
+.gg-page > * > :nth-child(n + 5) { animation-delay: 190ms; }
+/* Los fondos decorativos entran desde el lado contrario. */
+.gg-page > * > [aria-hidden="true"] { animation-name: gg-enter-back; }
+/* Las listas se arman fila por fila. */
+.gg-page li { animation: gg-enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.gg-page li:nth-child(2) { animation-delay: 45ms; }
+.gg-page li:nth-child(3) { animation-delay: 90ms; }
+.gg-page li:nth-child(4) { animation-delay: 135ms; }
+.gg-page li:nth-child(n + 5) { animation-delay: 180ms; }
+
+.gg-page [data-sort-list] > * { animation: none; }
+
+/* Franja diagonal que cruza el fondo en sentido contrario al contenido. */
+.gg-wipe {
+  display: block;
+  position: fixed;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  z-index: 35;
+  width: 55vw;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg,
+    var(--primary) 0 26px, transparent 26px 40px,
+    var(--signal-go) 40px 48px, transparent 48px 62px);
+  animation: gg-wipe-right 380ms ease-in both;
+}
+.gg-page[data-direction="back"] .gg-wipe { animation-name: gg-wipe-left; }
+@keyframes gg-enter {
+  from { opacity: 0; translate: var(--enter) 0; }
+}
+@keyframes gg-enter-back {
+  from { opacity: 0; translate: calc(var(--enter) * -1) 0; }
+}
+@keyframes gg-wipe-right {
+  from { transform: translateX(-130%) skewX(-14deg); opacity: 0.85; }
+  to { transform: translateX(230%) skewX(-14deg); opacity: 0.2; }
+}
+@keyframes gg-wipe-left {
+  from { transform: translateX(230%) skewX(-14deg); opacity: 0.85; }
+  to { transform: translateX(-130%) skewX(-14deg); opacity: 0.2; }
+}
+
+/* ---------- Arrastrar para ordenar ---------- */
+/* La copia que sigue al puntero: levantada, torcida y con borde lima. */
+.gg-drag-ghost {
+  position: fixed;
+  z-index: 55;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  list-style: none;
+  background: var(--primary) !important;
+  color: var(--background) !important;
+  border: 3px solid var(--signal-go) !important;
+  box-shadow: 0 18px 30px rgb(0 0 0 / 0.65);
+  rotate: -3deg;
+  scale: 1.07;
+}
+.gg-drag-ghost * { color: var(--background) !important; }
+/* El hueco donde va a caer. */
+[data-sort-placeholder] {
+  outline: 3px dashed var(--signal-go);
+  outline-offset: -3px;
+  border-color: transparent !important;
+  background: color-mix(in srgb, var(--signal-go) 14%, transparent) !important;
+}
+[data-sort-placeholder] > * { opacity: 0.2; }
+body.gg-dragging, body.gg-dragging * { cursor: grabbing !important; }
+
+/* ---------- Carga estilo póster ---------- */
+.gg-loader-field {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  width: 160vmax;
+  height: 160vmax;
+  translate: -50% -50%;
+  rotate: 32deg;
+}
+.gg-loader-stripe {
+  flex: 1;
+  margin-right: 1.2vmax;
+}
+/* Caen, llenan la pantalla y siguen de largo. */
+.gg-loader-stripe { animation: gg-stripe-fall 2s cubic-bezier(0.6, 0, 0.3, 1) infinite both; }
+@keyframes gg-stripe-fall {
+  0% { transform: translateY(-100%); }
+  35%, 72% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* Alterna rosa y lima: un color por pulso. */
+.gg-signal.gg-tone-both { animation-name: gg-pulse-both; }
+
+.gg-swatch { background: var(--tone); }
+.gg-swatch.gg-tone-both {
+  background: linear-gradient(135deg, var(--signal-stop) 50%, var(--signal-go) 50%);
+}
+
+@keyframes gg-pulse {
+  0% { opacity: 0; }
+  25%, 65% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes gg-pulse-both {
+  0% { opacity: 0.35; background-color: var(--signal-stop); }
+  15%, 40% { opacity: 1; background-color: var(--signal-stop); }
+  60%, 85% { opacity: 1; background-color: var(--signal-go); }
+  100% { opacity: 0.35; background-color: var(--signal-stop); }
+}
+/* En modo marco, "both" cambia el color del borde en vez del fondo. */
+.gg-signal-frame.gg-tone-both { animation-name: gg-pulse; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin parpadeo: un único marco que aparece y se va. */
+  .gg-signal {
+    animation: gg-pulse 900ms ease-in-out 1 both !important;
+  }
+  .gg-signal-full {
+    background: transparent;
+    box-shadow: inset 0 0 0 10px var(--tone);
+    align-items: flex-start;
+  }
+  .gg-signal-full .gg-signal-title {
+    margin-top: 10px;
+    background: var(--tone);
+    font-size: 2.5rem;
   }
 }
 

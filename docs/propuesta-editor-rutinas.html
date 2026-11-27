@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GymGirls — propuesta editor de rutinas</title>
+<style>
+  :root{--bg:#0a0208;--surface:#160010;--alt:#1c1a22;--fg:#fff;--muted:#9a96a3;--pink:#ff2e92;--line:rgba(255,143,214,.16)}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;max-width:430px;margin:0 auto;padding:0 16px 110px}
+  button,input,textarea{font:inherit;color:inherit}
+  button{background:none;border:0;cursor:pointer;min-height:44px}
+  header{position:sticky;top:0;z-index:2;background:var(--bg);padding:14px 0 10px}
+  h1{font-size:20px} .sub{color:var(--muted);font-size:13px}
+  .days{display:flex;gap:8px;overflow-x:auto;padding-top:10px}
+  .chip{white-space:nowrap;border:1px solid var(--line);background:var(--alt);border-radius:99px;padding:0 16px;color:var(--muted)}
+  .chip.on{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
+  .block{background:var(--alt);border:1px solid var(--line);border-radius:18px;margin-top:10px;overflow:hidden}
+  .head{display:flex;align-items:center}
+  .head .toggle{flex:1;display:flex;gap:12px;align-items:center;text-align:left;padding:12px 4px 12px 14px;min-height:60px}
+  .head b{display:block} .chev{color:var(--pink);width:14px}
+  .icon{width:44px;color:var(--muted);font-size:18px;flex:none}
+  ol{list-style:none;padding:0}
+  .row{display:flex;align-items:center;border-top:1px solid rgba(255,255,255,.07)}
+  .row .edit{flex:1;display:flex;gap:12px;align-items:center;text-align:left;padding:8px 4px 8px 14px;min-height:56px}
+  .n{color:var(--muted);width:14px;font-variant-numeric:tabular-nums}
+  .row small{display:block;color:var(--muted)}
+  .add{display:block;width:100%;color:var(--pink);font-weight:600;border-top:1px solid rgba(255,255,255,.07);min-height:50px}
+  .newblock{width:100%;margin-top:12px;border:1px dashed var(--pink);border-radius:18px;color:var(--pink);font-weight:600;min-height:52px}
+  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(10,2,8,.94);border-top:1px solid var(--line);padding:10px 16px;z-index:3}
+  footer div{max-width:398px;margin:auto;display:flex;align-items:center;gap:12px}
+  #state{flex:1;color:var(--muted);font-size:13px}
+  .primary{background:var(--pink);border-radius:99px;font-weight:700;padding:0 22px;min-height:48px}
+  .primary:disabled{opacity:.4}
+  .ghost{border:1px solid var(--pink);color:var(--pink);border-radius:99px;font-weight:600;padding:0 18px;min-height:48px}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:5;display:none}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;max-width:430px;margin:auto;max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:14px 16px 18px;display:none}
+  .open{display:block}
+  .sheet h2{font-size:17px;display:flex;justify-content:space-between;align-items:center}
+  .added{color:#7ee2a8;font-size:13px;min-height:19px}
+  input[type=text]{width:100%;background:var(--alt);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:6px;outline-color:var(--pink)}
+  .sugg{display:flex;gap:8px;overflow-x:auto;padding:8px 0 2px}
+  .sugg .chip{min-height:36px;font-size:13px}
+  .stepper{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .stepper .ctl{display:flex;align-items:center;background:var(--alt);border-radius:99px}
+  .stepper button{width:48px;font-size:22px;color:var(--pink)}
+  .stepper output{min-width:76px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+  .actions{display:flex;gap:10px;margin-top:14px} .actions button{flex:1}
+  .types{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .list button{display:block;width:100%;text-align:left;border-top:1px solid rgba(255,255,255,.07);min-height:50px}
+  .danger{color:#ff7b7b}
+  #toast{position:fixed;left:16px;right:16px;bottom:82px;max-width:398px;margin:auto;background:#2b2833;border-radius:14px;padding:4px 6px 4px 14px;display:none;align-items:center;justify-content:space-between;z-index:4}
+  #toast button{color:var(--pink);font-weight:700;padding:0 12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Rutina de Sofi</h1>
+  <p class="sub">Maqueta: los datos no se guardan</p>
+  <nav class="days" id="days"></nav>
+</header>
+<main id="blocks"></main>
+<footer><div><span id="state">Todo guardado</span><button class="primary" id="save" disabled>Guardar rutina</button></div></footer>
+<div id="toast"><span></span><button>Deshacer</button></div>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true"></section>
+<script>
+const $ = s => document.querySelector(s);
+const ex = (name, sets=3, reps=10, kg=0, rest=60) => ({name, sets, reps, kg, rest, notes:""});
+const block = (name, exercises=[]) => ({name, exercises});
+const days = [
+  {name:"Día 1 · Piernas", blocks:[
+    block("Entrada en calor",[ex("Bicicleta fija",1,1,0,0),ex("Movilidad de cadera",2,10,0,30),ex("Puente de glúteos",2,15,0,30)]),
+    block("Fuerza",[ex("Sentadilla",4,10,30,90),ex("Peso muerto rumano",3,10,25,90),ex("Estocadas",3,12,10,60),ex("Prensa",3,12,60,90)]),
+    block("Core",[ex("Plancha",3,1,0,45),ex("Abdominales",3,20,0,45)])]},
+  {name:"Día 2 · Espalda", blocks:[]}];
+let day = 0, open = 1, undo = null, timer;
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const detail = e => `${e.sets} × ${e.reps}${e.kg ? ` · ${e.kg} kg` : ""}${e.rest ? ` · ${e.rest} s` : ""}`;
+const blocks = () => days[day].blocks;
+
+function dirty(){ $("#state").textContent = "Cambios sin guardar"; $("#save").disabled = false; }
+$("#save").onclick = () => { $("#state").textContent = "Todo guardado"; $("#save").disabled = true; };
+
+function el(tag, attrs, html){ const n = document.createElement(tag); Object.assign(n, attrs); if (html != null) n.innerHTML = html; return n; }
+
+function render(){
+  $("#days").replaceChildren(...days.map((d,i) => el("button",{className:"chip"+(i===day?" on":""),onclick:()=>{day=i;open=0;render()}},esc(d.name))),
+    el("button",{className:"chip",onclick:()=>{days.push({name:`Día ${days.length+1}`,blocks:[]});day=days.length-1;dirty();render()}},"+ Día"));
+  const nodes = blocks().map((b,i) => {
+    const n = el("section",{className:"block"});
+    const n_ex = b.exercises.length, mins = Math.round(b.exercises.reduce((t,e)=>t+e.sets*(40+e.rest),0)/60);
+    const head = el("div",{className:"head"});
+    const t = el("button",{className:"toggle",onclick:()=>{open=open===i?-1:i;render()}},
+      `<span class="chev">${open===i?"▾":"▸"}</span><span><b>${esc(b.name)}</b><span class="sub">${n_ex} ejercicio${n_ex===1?"":"s"} · ~${mins} min</span></span>`);
+    t.setAttribute("aria-expanded", open===i);
+    const m = el("button",{className:"icon",onclick:()=>blockMenu(i)},"⋯"); m.setAttribute("aria-label","Opciones del bloque "+b.name);
+    head.append(t,m); n.append(head);
+    if (open===i){
+      const list = el("ol",{});
+      b.exercises.forEach((e,j) => {
+        const li = el("li",{className:"row"});
+        const more = el("button",{className:"icon",onclick:()=>exMenu(i,j)},"⋯"); more.setAttribute("aria-label","Opciones de "+e.name);
+        li.append(el("button",{className:"edit",onclick:()=>exerciseSheet(i,j)},`<span class="n">${j+1}</span><span>${esc(e.name)}<small>${detail(e)}</small></span>`), more);
+        list.append(li);
+      });
+      n.append(list, el("button",{className:"add",onclick:()=>exerciseSheet(i)},"+ Agregar ejercicio"));
+    }
+    return n;
+  });
+  $("#blocks").replaceChildren(...nodes, el("button",{className:"newblock",onclick:newBlock},"+ Nuevo bloque"));
+}
+
+function show(html){ $("#sheet").innerHTML = html; $("#sheet").classList.add("open"); $("#scrim").classList.add("open"); }
+function close(){ $("#sheet").classList.remove("open"); $("#scrim").classList.remove("open"); render(); }
+$("#scrim").onclick = close;
+const title = t => `<h2>${t}<button class="icon" data-close aria-label="Cerrar">✕</button></h2>`;
+const wireClose = () => document.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+
+function newBlock(){
+  show(title("¿Qué bloque querés agregar?") + `<div class="types">${["Entrada en calor","Movilidad","Fuerza","Core","Cardio","Estiramiento"].map(t=>`<button class="chip">${t}</button>`).join("")}</div>`);
+  wireClose();
+  document.querySelectorAll(".types button").forEach(b => b.onclick = () => {
+    blocks().push(block(b.textContent)); open = blocks().length-1; dirty(); render(); exerciseSheet(open);
+  });
+}
+
+// Un formulario por vez: al agregar, el ejercicio pasa a la lista y el form queda listo para el siguiente.
+function exerciseSheet(bi, ei, added){
+  const b = blocks()[bi], editing = ei != null;
+  const e = editing ? {...b.exercises[ei]} : {...(b.exercises.at(-1) || ex("")), name:"", notes:""};
+  const fields = [["sets","Series",1,1,""],["reps","Repeticiones",1,1,""],["kg","Peso",2.5,0," kg"],["rest","Descanso",15,0," s"]];
+  show(title(editing ? "Editar ejercicio" : `${esc(b.name)} · ejercicio ${b.exercises.length+1}`)
+    + `<p class="added" role="status">${added ? `✓ ${esc(added)} agregado` : ""}</p>
+    <label for="name" class="sub">Ejercicio</label><input type="text" id="name" autocomplete="off" placeholder="Escribí el nombre" value="${esc(e.name)}">
+    ${editing ? "" : `<div class="sugg">${["Sentadilla","Hip thrust","Estocadas","Remo","Plancha"].map(s=>`<button class="chip">${s}</button>`).join("")}</div>`}
+    ${fields.map(([k,l,,,u])=>`<div class="stepper"><span>${l}</span><span class="ctl"><button data-k="${k}" data-d="-1" aria-label="Menos ${l}">−</button><output id="o-${k}">${e[k]}${u}</output><button data-k="${k}" data-d="1" aria-label="Más ${l}">+</button></span></div>`).join("")}
+    <label for="notes" class="sub" style="display:block;margin-top:10px">Notas (opcional)</label><input type="text" id="notes" value="${esc(e.notes)}">
+    <div class="actions">${editing ? `<button class="primary" id="ok">Listo</button>`
+      : `<button class="ghost" id="done">Terminar bloque</button><button class="primary" id="ok">Agregar y seguir</button>`}</div>`);
+  wireClose();
+  document.querySelectorAll("[data-k]").forEach(btn => btn.onclick = () => {
+    const [k,,step,min,u] = fields.find(f => f[0] === btn.dataset.k);
+    e[k] = Math.max(min, e[k] + step * btn.dataset.d); $("#o-"+k).textContent = e[k] + u;
+  });
+  document.querySelectorAll(".sugg button").forEach(s => s.onclick = () => { $("#name").value = s.textContent; });
+  const read = () => { e.name = $("#name").value.trim(); e.notes = $("#notes").value; return e.name; };
+  const commit = () => { editing ? b.exercises[ei] = e : b.exercises.push(e); dirty(); };
+  $("#ok").onclick = () => {
+    if (!read()) return $("#name").focus();
+    commit();
+    if (editing) close(); else { render(); exerciseSheet(bi, null, e.name); $("#name").focus(); }
+  };
+  if ($("#done")) $("#done").onclick = () => { if (read()) commit(); close(); };
+}
+
+function menu(name, options){
+  show(title(esc(name)) + `<div class="list">${options.map((o,i)=>`<button data-i="${i}" class="${o[2]||""}">${o[0]}</button>`).join("")}</div>`);
+  wireClose();
+  document.querySelectorAll("[data-i]").forEach(b => b.onclick = () => { options[b.dataset.i][1](); });
+}
+function move(list, i, d){ const t = i+d; if (t<0||t>=list.length) return; [list[i],list[t]]=[list[t],list[i]]; dirty(); }
+function remove(list, i){
+  const [item] = list.splice(i,1); dirty(); close();
+  undo = () => { list.splice(i,0,item); render(); };
+  $("#toast span").textContent = `“${item.name}” eliminado`; $("#toast").style.display = "flex";
+  clearTimeout(timer); timer = setTimeout(()=>$("#toast").style.display="none", 6000);
+}
+$("#toast button").onclick = () => { undo(); $("#toast").style.display = "none"; };
+function exMenu(bi, ei){
+  const list = blocks()[bi].exercises;
+  menu(list[ei].name, [["Subir",()=>{move(list,ei,-1);close()}],["Bajar",()=>{move(list,ei,1);close()}],
+    ["Duplicar",()=>{list.splice(ei+1,0,{...list[ei]});dirty();close()}],["Eliminar",()=>remove(list,ei),"danger"]]);
+}
+function blockMenu(i){
+  const list = blocks();
+  menu(list[i].name, [["Subir bloque",()=>{move(list,i,-1);open=-1;close()}],["Bajar bloque",()=>{move(list,i,1);open=-1;close()}],
+    ["Eliminar bloque",()=>{open=-1;remove(list,i)},"danger"]]);
+}
+render();
+</script>
+</body>
+</html>

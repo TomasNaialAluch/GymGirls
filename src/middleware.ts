@@ -13,7 +13,9 @@ export function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/admin");
   const isUsuariaRoute =
-    pathname.startsWith("/dia") || pathname.startsWith("/progreso");
+    pathname.startsWith("/dia") ||
+    pathname.startsWith("/progreso") ||
+    pathname.startsWith("/objetivos");
 
   if (!sessionCookie && (isAdminRoute || isUsuariaRoute)) {
     const loginUrl = new URL("/login", request.url);
@@ -25,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dia/:path*", "/progreso/:path*"],
+  matcher: ["/admin/:path*", "/dia/:path*", "/progreso/:path*", "/objetivos/:path*"],
 };

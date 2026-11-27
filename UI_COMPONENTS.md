@@ -26,6 +26,8 @@ pase los datos ya resueltos.
 | 2026-11-19 | `IntroSplash` + `AppShell` — video de intro al entrar a la app. |
 | 2026-11-19 | Primer set de componentes: `Logo`, `AnimatedBackground`, `Card`, `Button`, `ProgressRing`, `StatItem`, `StreakBadge`, `BottomNav`, `WorkoutCard` + página `/design-system`. |
 | 2026-11-24 | Nuevas primitivas: `TextField`, `SelectField`, `PillToggleGroup`, `AuthLayout`, `PageHeader`, `AdminHeader`; `Button` ahora tiene `size` (`sm`\|`md`) y variante `ghost`. |
+| 2026-11-27 | Editor de rutina rehecho: bloques plegables (`BlockCard`), carga de a un ejercicio (`ExerciseSheet`, `Stepper`), menús en `Sheet`, barra de guardado con deshacer y aviso de cambios sin guardar. Reemplaza a `BlockListEditor` y `ExerciseListEditor`. |
+| 2026-11-27 | Estilo Póster (ver BRAND.md): portada del alumno en `/dia`, entrenamiento guiado en `/dia/[dayId]` (`ExerciseScreen`, `Clock`, `lib/training.ts`) y panel del entrenador en `/admin`. Reemplaza a `ExerciseRunner`, `SetLogger`, `Stopwatch` y `RestTimer`; las secciones de abajo que los mencionan quedaron como historial. |
 | 2026-11-24 | **Se vistieron todas las pantallas reales** (ver APP_SPEC.md): `/login`, `/invite/[code]`, `/dia/[dayId]` (+ `ExerciseRunner`, `Stopwatch`, `RestTimer`, `SetLogger`), `/progreso` (+ `ProgressList`), y todo `/admin/*` (+ `CreateInviteForm`, `BlockListEditor`, `ExerciseListEditor`). Se conservó 1:1 la lógica/props existentes — solo cambió JSX/clases, salvo 2 props opcionales nuevas (ver abajo). |
 
 ---

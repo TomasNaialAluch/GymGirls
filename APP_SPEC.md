@@ -42,7 +42,7 @@ Ver tipos exactos en [src/types/index.ts](src/types/index.ts).
 ## 3. Modelo de datos (Firestore)
 
 - `users/{uid}` — perfil: `role` (`admin`|`usuaria`), `displayName`, `email`,
-  `trainingDays` (qué días de la semana entrena esta usuaria).
+  `adminId` (entrenador del alumno; ver "Cuentas y roles" en README.md).
 - `invites/{code}` — invitación generada por la admin (alta sin
   auto-registro libre): nombre, días de entrenamiento, usada/no usada.
 - `routines/{uid}` — **un documento por usuaria** con el árbol completo
@@ -120,6 +120,7 @@ ni sus props.
 - [x] Modelo de datos con bloques (`src/types/index.ts`)
 - [x] Capa de acceso a datos cliente (`src/lib/data/*`, `src/lib/auth/useAuth.ts`)
 - [x] Login + alta por invitación funcionales
+- [x] Registro con elección de rol y alumnos separados por entrenador
 - [x] Editor de rutina por bloques (admin)
 - [x] Vista del día + cronómetro + descanso + registro de series (usuaria)
 - [x] Vista de progreso/historial

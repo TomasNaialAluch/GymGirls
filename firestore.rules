@@ -3,45 +3,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Cualquiera puede registrarse como admin, así que ser admin no alcanza:
+    // un admin solo accede a SUS alumnos (users/{uid}.adminId).
+    // Las altas y la vinculación pasan solo por la API (Admin SDK, que no usa
+    // estas reglas).
+
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    function currentUser() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function isAdmin() {
-      return isSignedIn() && currentUser().data.role == 'admin';
     }
 
     function isSelf(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // users/{uid} — profile + role. Admin manages all; a usuaria reads her own.
-    match /users/{uid} {
-      allow read: if isAdmin() || isSelf(uid);
-      allow write: if isAdmin();
+    function userData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
     }
 
-    // invites/{code} — only the admin app (server, via Admin SDK) touches these directly.
-    // Reads are exposed through an API route, not client-side Firestore access.
+    function isAdmin() {
+      return isSignedIn() && userData(request.auth.uid).role == 'admin';
+    }
+
+    function isTrainerOf(uid) {
+      return isAdmin() && userData(uid).get('adminId', null) == request.auth.uid;
+    }
+
+    // users/{uid} — perfil + rol + entrenador. Nadie lo escribe desde el cliente.
+    match /users/{uid} {
+      allow read: if isSelf(uid)
+        || (isAdmin() && resource.data.get('adminId', null) == request.auth.uid);
+      allow write: if false;
+    }
+
+    // invites/{code} — solo el servidor, vía API.
     match /invites/{code} {
       allow read, write: if false;
     }
 
-    // routines/{uid} — admin edits, usuaria reads her own.
+    // routines/{uid} — la edita su entrenador; el alumno la lee.
     match /routines/{uid} {
-      allow read: if isAdmin() || isSelf(uid);
-      allow write: if isAdmin();
+      allow read: if isSelf(uid) || isTrainerOf(uid);
+      allow write: if isTrainerOf(uid);
     }
 
-    // progress/{uid}/entries/{entryId} — usuaria logs/reads her own, admin reads all.
+    // goals/{uid} — datos y metas del alumno. Se escriben solo por la API, que
+    // controla qué campo puede cambiar cada rol.
+    match /goals/{uid} {
+      allow read: if isSelf(uid) || isTrainerOf(uid);
+      allow write: if false;
+    }
+
+    // progress/{uid}/entries/{entryId} — el alumno registra y lee lo suyo.
     match /progress/{uid}/entries/{entryId} {
-      allow read: if isAdmin() || isSelf(uid);
+      allow read: if isSelf(uid) || isTrainerOf(uid);
       allow create: if isSelf(uid);
-      allow update, delete: if isAdmin();
+      allow update, delete: if isTrainerOf(uid);
     }
   }
 }

@@ -2,10 +2,16 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase/client";
+import {
+  accountErrorMessage,
+  createOrResumeAccount,
+  createSession,
+} from "@/lib/data/accounts";
 import { acceptInvite, getInvite } from "@/lib/data/invites";
 import { useAuth } from "@/lib/auth/useAuth";
+import { useNotify } from "@/components/ui/Notice";
+import { signal } from "@/lib/signals";
+import PosterLoader from "@/components/ui/PosterLoader";
 import AuthLayout from "@/components/ui/AuthLayout";
 import TextField from "@/components/ui/TextField";
 import Button from "@/components/ui/Button";
@@ -14,6 +20,7 @@ export default function InvitePage() {
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
   const { refreshAppUser } = useAuth();
+  const notify = useNotify();
 
   const [invite, setInvite] = useState<
     { displayName: string } | null | undefined
@@ -34,35 +41,23 @@ export default function InvitePage() {
     setError(null);
     setSubmitting(true);
     try {
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      const idToken = await credential.user.getIdToken();
+      const idToken = await createOrResumeAccount(email, password);
       await acceptInvite(code, idToken);
-      const sessionRes = await fetch("/api/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      if (!sessionRes.ok) throw new Error("No se pudo iniciar sesión");
+      await createSession(idToken);
       await refreshAppUser();
+      notify("Cuenta creada y vinculada con tu entrenador");
       router.push("/");
       router.refresh();
-    } catch {
-      setError("No se pudo crear la cuenta. Probá con otro email.");
+    } catch (submitError) {
+      setError(accountErrorMessage(submitError));
+      signal("error");
     } finally {
       setSubmitting(false);
     }
   }
 
   if (invite === null) {
-    return (
-      <AuthLayout>
-        <p className="gg-muted text-center text-sm">Cargando invitación…</p>
-      </AuthLayout>
-    );
+    return <PosterLoader label="Cargando tu invitación" />;
   }
 
   if (invite === undefined) {
@@ -77,6 +72,7 @@ export default function InvitePage() {
 
   return (
     <AuthLayout>
+      {submitting && <PosterLoader label="Creando tu cuenta" />}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <h1 className="text-lg font-semibold text-foreground">
           ¡Hola, {invite.displayName}!
@@ -90,11 +86,12 @@ export default function InvitePage() {
           required
         />
         <TextField
-          label="Elegí una contraseña"
+          label="Contraseña"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
+          placeholder="Si ya tenés cuenta, usá la tuya"
           minLength={6}
           required
         />

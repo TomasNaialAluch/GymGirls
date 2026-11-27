@@ -2,7 +2,7 @@ import { fetchJson } from "./http";
 
 export async function createInvite(input: {
   displayName: string;
-}): Promise<{ code: string }> {
+}): Promise<{ code: string; uid: string }> {
   return fetchJson(`/api/invites`, {
     method: "POST",
     body: JSON.stringify(input),

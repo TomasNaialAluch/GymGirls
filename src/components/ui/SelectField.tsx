@@ -1,4 +1,4 @@
-import type { ReactNode, SelectHTMLAttributes } from "react";
+import { useId, type ReactNode, type SelectHTMLAttributes } from "react";
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
@@ -14,7 +14,9 @@ export default function SelectField({
   children,
   ...props
 }: SelectFieldProps) {
-  const selectId = id ?? name ?? label.toLowerCase().replace(/\s+/g, "-");
+  // Único por instancia: la misma etiqueta puede repetirse en una pantalla.
+  const generatedId = useId();
+  const selectId = id ?? generatedId;
   return (
     <label htmlFor={selectId} className="flex flex-col gap-1.5 text-sm">
       <span className="gg-muted font-medium">{label}</span>
