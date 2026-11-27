@@ -10,6 +10,10 @@ import AnimatedBackground, {
 } from "@/components/brand/AnimatedBackground";
 import PageHeader from "@/components/ui/PageHeader";
 import PillToggleGroup from "@/components/ui/PillToggleGroup";
+import Card from "@/components/ui/Card";
+import ProgressRing from "@/components/ui/ProgressRing";
+import StatItem from "@/components/ui/StatItem";
+import { ListIcon, DumbbellIcon, CheckCircleIcon } from "@/components/ui/icons";
 import type { RoutineDay } from "@/types";
 
 export default function DiaPage() {
@@ -20,6 +24,11 @@ export default function DiaPage() {
   const [activeExerciseIds, setActiveExerciseIds] = useState<Set<string>>(
     new Set(),
   );
+  // Completados en esta sesión (para el anillo de progreso) — no persiste
+  // entre recargas, eso vive en progress/{uid}/entries vía ProgressList.
+  const [completedExerciseIds, setCompletedExerciseIds] = useState<
+    Set<string>
+  >(new Set());
   const [celebrating, setCelebrating] = useState(false);
 
   useEffect(() => {
@@ -34,6 +43,11 @@ export default function DiaPage() {
       else next.delete(exerciseId);
       return next;
     });
+  }
+
+  function handleExerciseCompleted(exerciseId: string) {
+    setCelebrating(true);
+    setCompletedExerciseIds((prev) => new Set(prev).add(exerciseId));
   }
 
   // El fondo prioriza "celebrate" (pulso al cerrar un ejercicio), después
@@ -53,6 +67,16 @@ export default function DiaPage() {
   }
 
   const day = days?.find((d) => d.id === dayId) ?? null;
+  const totalExercises =
+    day?.blocks.reduce((sum, b) => sum + b.exercises.length, 0) ?? 0;
+  const completedCount =
+    day?.blocks.reduce(
+      (sum, b) =>
+        sum + b.exercises.filter((e) => completedExerciseIds.has(e.id)).length,
+      0,
+    ) ?? 0;
+  const percent =
+    totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden pb-16">
@@ -62,6 +86,10 @@ export default function DiaPage() {
       />
       <div className="relative z-10 mx-auto flex max-w-md flex-col gap-6 px-5 pt-6">
         <PageHeader />
+
+        <h1 className="text-2xl font-semibold text-foreground">
+          ¡Hola, {appUser.displayName}!
+        </h1>
 
         {days === null && <p className="gg-muted text-sm">Cargando rutina…</p>}
 
@@ -84,9 +112,39 @@ export default function DiaPage() {
 
         {day && (
           <>
-            <h1 className="text-2xl font-semibold text-foreground">
-              {day.name}
-            </h1>
+            {totalExercises > 0 && (
+              <Card>
+                <p className="gg-muted mb-4 text-xs font-semibold uppercase tracking-wide">
+                  {day.name}
+                </p>
+                <div className="flex items-center gap-6">
+                  <ProgressRing percent={percent} label="Completado" />
+                  <div className="flex flex-col gap-3">
+                    <StatItem
+                      icon={<ListIcon className="h-5 w-5" />}
+                      label="Bloques"
+                      value={String(day.blocks.length)}
+                    />
+                    <StatItem
+                      icon={<DumbbellIcon className="h-5 w-5" />}
+                      label="Ejercicios"
+                      value={String(totalExercises)}
+                    />
+                    <StatItem
+                      icon={<CheckCircleIcon className="h-5 w-5" />}
+                      label="Completados"
+                      value={`${completedCount}/${totalExercises}`}
+                    />
+                  </div>
+                </div>
+                {percent === 100 && (
+                  <p className="mt-4 text-sm font-semibold text-primary">
+                    ¡Entrenamiento completo! 💪
+                  </p>
+                )}
+              </Card>
+            )}
+
             {day.blocks.length === 0 && (
               <p className="gg-muted text-sm">
                 Todavía no hay ejercicios cargados para este día.
@@ -109,7 +167,7 @@ export default function DiaPage() {
                       onRunningChange={(running) =>
                         handleRunningChange(exercise.id, running)
                       }
-                      onCelebrate={() => setCelebrating(true)}
+                      onCelebrate={() => handleExerciseCompleted(exercise.id)}
                     />
                   ))}
                 </ul>
